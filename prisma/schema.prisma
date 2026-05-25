@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SourceType {
+  reddit
+}
+
+enum SignalStatus {
+  new
+  reviewed
+  draft_created
+  published
+  ignored
+}
+
+enum DraftStatus {
+  draft
+  approved
+  published
+}
+
+model Source {
+  id            String   @id @default(cuid())
+  type          SourceType @default(reddit)
+  name          String
+  subreddit     String
+  enabled       Boolean  @default(true)
+  keywords      String[]
+  scanFrequency String   @default("daily")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  rawPosts RawPost[]
+}
+
+model RawPost {
+  id             String   @id @default(cuid())
+  sourceId       String
+  externalId     String   @unique
+  title          String
+  url            String
+  subreddit      String
+  authorHash     String
+  score          Int      @default(0)
+  commentCount   Int      @default(0)
+  createdUtc     DateTime
+  permalink      String
+  contentSnippet String   @db.VarChar(500)
+  fetchedAt      DateTime @default(now())
+
+  source      Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  signalLinks SignalPost[]
+
+  @@index([sourceId])
+  @@index([subreddit])
+  @@index([createdUtc])
+}
+
+model Signal {
+  id          String       @id @default(cuid())
+  title       String
+  summary     String
+  topic       String
+  keywords    String[]
+  score       Int
+  confidence  Float
+  sourceCount Int
+  status      SignalStatus @default(new)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  posts  SignalPost[]
+  drafts Draft[]
+}
+
+model SignalPost {
+  id        String @id @default(cuid())
+  signalId  String
+  rawPostId String
+
+  signal  Signal  @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  rawPost RawPost @relation(fields: [rawPostId], references: [id], onDelete: Cascade)
+
+  @@unique([signalId, rawPostId])
+}
+
+model Draft {
+  id             String      @id @default(cuid())
+  signalId       String
+  title          String
+  slug           String      @unique
+  excerpt        String
+  contentMarkdown String
+  seoTitle       String
+  seoDescription String
+  status         DraftStatus @default(draft)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  publishedAt    DateTime?
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
