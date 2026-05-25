@@ -1,0 +1,65 @@
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSignals } from "@/lib/data/repository";
+
+export default async function SignalsPage() {
+  const signals = await getSignals();
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-normal">Signals</h1>
+        <p className="text-sm text-muted-foreground">Detected trends with source metadata, AI summary, and blog angle.</p>
+      </div>
+
+      <div className="grid gap-4">
+        {signals.map((signal) => (
+          <Card key={signal.id}>
+            <CardHeader>
+              <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+                <div>
+                  <CardTitle>{signal.title}</CardTitle>
+                  <CardDescription>{signal.topic}</CardDescription>
+                </div>
+                <Badge variant={signal.status === "new" ? "warning" : "secondary"}>{signal.status}</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">AI summary</p>
+                  <p className="mt-1 text-sm leading-6">{signal.summary}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Suggested blog angle</p>
+                  <p className="mt-1 text-sm leading-6">{signal.suggestedAngle}</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {signal.keywords.map((keyword) => (
+                    <Badge key={keyword} variant="muted">
+                      {keyword}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-muted/30 p-4">
+                <p className="text-xs font-medium uppercase text-muted-foreground">Related Reddit metadata</p>
+                <div className="mt-3 space-y-3">
+                  {signal.posts.map((post) => (
+                    <div key={post.id} className="border-b border-border pb-3 last:border-0 last:pb-0">
+                      <p className="text-sm font-medium">{post.title}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        r/{post.subreddit} · score {post.score} · comments {post.commentCount}
+                      </p>
+                      <p className="mt-2 text-xs leading-5 text-muted-foreground">{post.contentSnippet}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
