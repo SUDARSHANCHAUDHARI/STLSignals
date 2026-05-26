@@ -67,7 +67,7 @@ All cron routes require `Authorization: Bearer $CRON_SECRET` when `CRON_SECRET` 
 
 ## Production TODOs
 
-- Wire repository functions to Prisma queries instead of mock fixtures.
+- Persist job outputs with Prisma upserts for fetched posts, detected signals, generated drafts, and audit logs.
 - Add Supabase Row Level Security policies for admin/editor roles.
 - Add encrypted secret storage for API credentials.
 - Add queue-backed jobs for larger source sets.
