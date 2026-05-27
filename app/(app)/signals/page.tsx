@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { Route } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
@@ -36,9 +38,9 @@ export default async function SignalsPage({
             Search
           </button>
           {q && (
-            <a href="/signals" className="text-sm text-muted-foreground underline">
+            <Link href={"/signals" as Route} className="text-sm text-muted-foreground underline">
               Clear
-            </a>
+            </Link>
           )}
         </form>
       </div>
@@ -49,10 +51,26 @@ export default async function SignalsPage({
             <CardHeader>
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                 <div>
-                  <CardTitle>{signal.title}</CardTitle>
+                  <Link href={`/signals/${signal.id}` as Route} className="hover:underline">
+                    <CardTitle>{signal.title}</CardTitle>
+                  </Link>
                   <CardDescription>{signal.topic}</CardDescription>
                 </div>
-                <Badge variant={signal.status === "new" ? "warning" : "secondary"}>{signal.status}</Badge>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Badge variant={signal.status === "new" ? "warning" : "secondary"}>{signal.status}</Badge>
+                  <Link
+                    href={`/signals/${signal.id}` as Route}
+                    className="rounded-md border border-border px-2 py-1 text-xs font-medium transition hover:bg-accent"
+                  >
+                    View
+                  </Link>
+                  <Link
+                    href={`/drafts/new?signalId=${signal.id}` as Route}
+                    className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground transition hover:opacity-90"
+                  >
+                    Draft
+                  </Link>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
