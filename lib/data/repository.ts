@@ -88,6 +88,7 @@ export async function getSources(): Promise<Source[]> {
     enabled: source.enabled,
     keywords: source.keywords,
     scanFrequency: source.scanFrequency,
+    lastFetchedAt: source.lastFetchedAt?.toISOString() ?? null,
     createdAt: source.createdAt.toISOString(),
     updatedAt: source.updatedAt.toISOString()
   }));
@@ -158,6 +159,99 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     published: drafts.filter((draft) => draft.status === "published").length,
     monitoredSources: sources.filter((source) => source.enabled).length
   };
+}
+
+export interface PaginatedResult<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export async function getSignalsPaginated(page = 1, pageSize = 20): Promise<PaginatedResult<Signal>> {
+  if (useMockMode) {
+    const start = (page - 1) * pageSize;
+    const items = mockSignals.slice(start, start + pageSize);
+    return { items, total: mockSignals.length, page, pageSize, totalPages: Math.ceil(mockSignals.length / pageSize) };
+  }
+
+  const [signals, total] = await Promise.all([
+    prisma.signal.findMany({
+      include: { posts: { include: { rawPost: true } } },
+      orderBy: [{ score: "desc" }, { createdAt: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.signal.count()
+  ]);
+
+  return { items: signals.map(mapSignal), total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+export async function getDraftsPaginated(page = 1, pageSize = 20): Promise<PaginatedResult<Draft>> {
+  if (useMockMode) {
+    const start = (page - 1) * pageSize;
+    const items = mockDrafts.slice(start, start + pageSize);
+    return { items, total: mockDrafts.length, page, pageSize, totalPages: Math.ceil(mockDrafts.length / pageSize) };
+  }
+
+  const [drafts, total] = await Promise.all([
+    prisma.draft.findMany({
+      orderBy: [{ updatedAt: "desc" }],
+      skip: (page - 1) * pageSize,
+      take: pageSize
+    }),
+    prisma.draft.count()
+  ]);
+
+  return { items: drafts.map(mapDraft), total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+}
+
+export async function searchSignals(q: string): Promise<Signal[]> {
+  if (useMockMode) {
+    const lower = q.toLowerCase();
+    return mockSignals.filter(
+      (s) => s.title.toLowerCase().includes(lower) || s.summary.toLowerCase().includes(lower)
+    );
+  }
+
+  const signals = await prisma.signal.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { summary: { contains: q, mode: "insensitive" } }
+      ]
+    },
+    include: { posts: { include: { rawPost: true } } },
+    orderBy: [{ score: "desc" }],
+    take: 50
+  });
+
+  return signals.map(mapSignal);
+}
+
+export async function searchDrafts(q: string): Promise<Draft[]> {
+  if (useMockMode) {
+    const lower = q.toLowerCase();
+    return mockDrafts.filter(
+      (d) => d.title.toLowerCase().includes(lower) || d.excerpt.toLowerCase().includes(lower)
+    );
+  }
+
+  const drafts = await prisma.draft.findMany({
+    where: {
+      OR: [
+        { title: { contains: q, mode: "insensitive" } },
+        { excerpt: { contains: q, mode: "insensitive" } },
+        { contentMarkdown: { contains: q, mode: "insensitive" } }
+      ]
+    },
+    orderBy: [{ updatedAt: "desc" }],
+    take: 50
+  });
+
+  return drafts.map(mapDraft);
 }
 
 export async function getRecentPosts() {

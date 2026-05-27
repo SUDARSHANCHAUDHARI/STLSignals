@@ -10,6 +10,7 @@ export type Source = {
   enabled: boolean;
   keywords: string[];
   scanFrequency: string;
+  lastFetchedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

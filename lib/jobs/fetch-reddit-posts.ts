@@ -4,6 +4,7 @@ import { fetchRedditPostsForSubreddit } from "@/lib/reddit/client";
 import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
+const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4 hours — matches cron interval
 
 export async function fetchRedditPostsJob() {
   const logger = createJobLogger("fetch-reddit-posts");
@@ -13,6 +14,15 @@ export async function fetchRedditPostsJob() {
   const results = [];
 
   for (const source of sources) {
+    if (!useMockMode && source.lastFetchedAt) {
+      const age = Date.now() - new Date(source.lastFetchedAt).getTime();
+      if (age < COOLDOWN_MS) {
+        logger.info("skipping (cooldown)", { subreddit: source.subreddit, remainingMs: COOLDOWN_MS - age });
+        results.push({ sourceId: source.id, subreddit: source.subreddit, fetched: 0, stored: 0, skipped: true });
+        continue;
+      }
+    }
+
     logger.info("fetching subreddit", { subreddit: source.subreddit });
     const posts = await withBackoff(() =>
       fetchRedditPostsForSubreddit(source.subreddit, source.keywords)
@@ -44,6 +54,13 @@ export async function fetchRedditPostsJob() {
         });
         stored++;
       }
+    }
+
+    if (!useMockMode) {
+      await prisma.source.update({
+        where: { id: source.id },
+        data: { lastFetchedAt: new Date() }
+      });
     }
 
     results.push({

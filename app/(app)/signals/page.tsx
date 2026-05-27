@@ -1,19 +1,50 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getSignals } from "@/lib/data/repository";
+import { Pagination } from "@/components/ui/pagination";
+import { getSignalsPaginated, searchSignals } from "@/lib/data/repository";
 
-export default async function SignalsPage() {
-  const signals = await getSignals();
+const PAGE_SIZE = 15;
+
+export default async function SignalsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ page?: string; q?: string }>;
+}) {
+  const { page: pageParam, q } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10));
+
+  const result = q
+    ? { items: await searchSignals(q), total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 }
+    : await getSignalsPaginated(page, PAGE_SIZE);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-normal">Signals</h1>
-        <p className="text-sm text-muted-foreground">Detected trends with source metadata, AI summary, and blog angle.</p>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-normal">Signals</h1>
+          <p className="text-sm text-muted-foreground">Detected trends with source metadata, AI summary, and blog angle.</p>
+        </div>
+        <form method="GET" className="flex items-center gap-2">
+          <input
+            type="search"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="Search signals…"
+            className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <button type="submit" className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+            Search
+          </button>
+          {q && (
+            <a href="/signals" className="text-sm text-muted-foreground underline">
+              Clear
+            </a>
+          )}
+        </form>
       </div>
 
       <div className="grid gap-4">
-        {signals.map((signal) => (
+        {result.items.map((signal) => (
           <Card key={signal.id}>
             <CardHeader>
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
@@ -36,9 +67,7 @@ export default async function SignalsPage() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {signal.keywords.map((keyword) => (
-                    <Badge key={keyword} variant="muted">
-                      {keyword}
-                    </Badge>
+                    <Badge key={keyword} variant="muted">{keyword}</Badge>
                   ))}
                 </div>
               </div>
@@ -60,6 +89,14 @@ export default async function SignalsPage() {
           </Card>
         ))}
       </div>
+
+      {!q && (
+        <Pagination
+          page={result.page}
+          totalPages={result.totalPages}
+          buildHref={(p) => `/signals?page=${p}`}
+        />
+      )}
     </div>
   );
 }

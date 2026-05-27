@@ -31,15 +31,16 @@ enum DraftStatus {
 }
 
 model Source {
-  id            String   @id @default(cuid())
-  type          SourceType @default(reddit)
-  name          String
-  subreddit     String
-  enabled       Boolean  @default(true)
-  keywords      String[]
-  scanFrequency String   @default("daily")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String     @id @default(cuid())
+  type           SourceType @default(reddit)
+  name           String
+  subreddit      String
+  enabled        Boolean    @default(true)
+  keywords       String[]
+  scanFrequency  String     @default("daily")
+  lastFetchedAt  DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   rawPosts RawPost[]
 }

@@ -9,6 +9,7 @@ export const mockSources = [
     enabled: true,
     keywords: ["qa", "automation", "ci", "flaky tests"],
     scanFrequency: "daily",
+    lastFetchedAt: null,
     createdAt: "2026-05-18T08:00:00.000Z",
     updatedAt: "2026-05-24T08:00:00.000Z"
   },
@@ -20,6 +21,7 @@ export const mockSources = [
     enabled: true,
     keywords: ["platform engineering", "developer experience", "observability"],
     scanFrequency: "twice daily",
+    lastFetchedAt: null,
     createdAt: "2026-05-18T08:00:00.000Z",
     updatedAt: "2026-05-24T08:00:00.000Z"
   },
@@ -31,6 +33,7 @@ export const mockSources = [
     enabled: false,
     keywords: ["supply chain", "secrets", "sbom"],
     scanFrequency: "weekly",
+    lastFetchedAt: null,
     createdAt: "2026-05-18T08:00:00.000Z",
     updatedAt: "2026-05-24T08:00:00.000Z"
   }
