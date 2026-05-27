@@ -1,6 +1,6 @@
 export type SourceStatus = "enabled" | "disabled";
 export type SignalStatus = "new" | "reviewed" | "draft_created" | "published" | "ignored";
-export type DraftStatus = "draft" | "approved" | "published";
+export type DraftStatus = "draft" | "reviewing" | "approved" | "scheduled" | "published" | "archived" | "rejected";
 
 export type Source = {
   id: string;
@@ -44,6 +44,8 @@ export type Signal = {
   updatedAt: string;
   posts: RawPost[];
   suggestedAngle: string;
+  topicClusterId?: string;
+  researchPacket?: ResearchPacket;
 };
 
 export type Draft = {
@@ -56,9 +58,33 @@ export type Draft = {
   seoTitle: string;
   seoDescription: string;
   status: DraftStatus;
+  version: number;
+  editorialNotes: string | null;
+  tags: string[];
+  faqs: Array<{ question: string; answer: string }> | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+};
+
+export type ResearchPacket = {
+  trend_summary: string;
+  recurring_opinions: string[];
+  opposing_viewpoints: string[];
+  key_tools: string[];
+  faqs: Array<{ question: string; answer: string }>;
+  technical_concepts: string[];
+  risks: string[];
+  opportunities: string[];
+  why_it_matters: string;
+};
+
+export type TopicCluster = {
+  topic: string;
+  label: string;
+  keywords: string[];
+  postIds: string[];
+  confidence: number;
 };
 
 export type DashboardMetrics = {

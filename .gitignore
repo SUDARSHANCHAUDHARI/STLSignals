@@ -1,3 +1,7 @@
+# Planning / AI artifacts
+.flow/
+prompts/
+
 # Dependencies
 node_modules/
 .pnp

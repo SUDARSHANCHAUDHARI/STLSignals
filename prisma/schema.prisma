@@ -21,8 +21,12 @@ enum SignalStatus {
 
 enum DraftStatus {
   draft
+  reviewing
   approved
+  scheduled
   published
+  archived
+  rejected
 }
 
 model Source {
@@ -63,20 +67,24 @@ model RawPost {
 }
 
 model Signal {
-  id          String       @id @default(cuid())
-  title       String
-  summary     String
-  topic       String
-  keywords    String[]
-  score       Int
-  confidence  Float
-  sourceCount Int
-  status      SignalStatus @default(new)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  title          String
+  summary        String
+  topic          String
+  keywords       String[]
+  score          Int
+  confidence     Float
+  sourceCount    Int
+  status         SignalStatus @default(new)
+  researchPacket Json?
+  topicClusterId String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  posts  SignalPost[]
-  drafts Draft[]
+  posts        SignalPost[]
+  drafts       Draft[]
+  topicCluster TopicCluster?    @relation(fields: [topicClusterId], references: [id])
+  analytics    SignalAnalytics?
 }
 
 model SignalPost {
@@ -91,20 +99,25 @@ model SignalPost {
 }
 
 model Draft {
-  id             String      @id @default(cuid())
-  signalId       String
-  title          String
-  slug           String      @unique
-  excerpt        String
+  id              String      @id @default(cuid())
+  signalId        String
+  title           String
+  slug            String      @unique
+  excerpt         String
   contentMarkdown String
-  seoTitle       String
-  seoDescription String
-  status         DraftStatus @default(draft)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  publishedAt    DateTime?
+  seoTitle        String
+  seoDescription  String
+  status          DraftStatus @default(draft)
+  version         Int         @default(1)
+  editorialNotes  String?
+  tags            String[]    @default([])
+  faqs            Json?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  publishedAt     DateTime?
 
-  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  signal     Signal             @relation(fields: [signalId], references: [id], onDelete: Cascade)
+  repurposes ContentRepurpose[]
 }
 
 model AuditLog {
@@ -116,4 +129,43 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+model TopicCluster {
+  id          String   @id @default(cuid())
+  topic       String   @unique
+  label       String
+  keywords    String[]
+  signalCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  signals Signal[]
+}
+
+model ContentRepurpose {
+  id        String   @id @default(cuid())
+  draftId   String
+  platform  String
+  content   String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  draft Draft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@unique([draftId, platform])
+}
+
+model SignalAnalytics {
+  id         String   @id @default(cuid())
+  signalId   String   @unique
+  score      Int      @default(0)
+  confidence Float    @default(0)
+  embedding  Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  signal Signal @relation(fields: [signalId], references: [id], onDelete: Cascade)
 }

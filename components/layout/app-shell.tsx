@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { Route } from "next";
-import { BarChart3, FileText, Gauge, RadioTower, Settings, Sparkles } from "lucide-react";
+import { BarChart3, FileText, Gauge, LayoutList, LineChart, RadioTower, Settings, Sparkles } from "lucide-react";
 
 const navItems: Array<{ href: Route; label: string; icon: typeof Gauge }> = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/sources", label: "Sources", icon: RadioTower },
   { href: "/signals", label: "Signals", icon: BarChart3 },
   { href: "/drafts", label: "Drafts", icon: FileText },
+  { href: "/editorial", label: "Editorial", icon: LayoutList },
+  { href: "/analytics", label: "Analytics", icon: LineChart },
   { href: "/settings", label: "Settings", icon: Settings }
 ];
 

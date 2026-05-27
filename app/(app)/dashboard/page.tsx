@@ -1,11 +1,26 @@
 import Link from "next/link";
+import { TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getDashboardMetrics, getSignals } from "@/lib/data/repository";
 
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+function velocity(signals: Awaited<ReturnType<typeof getSignals>>) {
+  const now = Date.now();
+  const last7 = signals.filter((s) => now - new Date(s.createdAt).getTime() < 7 * ONE_DAY_MS).length;
+  const prev7 = signals.filter((s) => {
+    const age = now - new Date(s.createdAt).getTime();
+    return age >= 7 * ONE_DAY_MS && age < 14 * ONE_DAY_MS;
+  }).length;
+  if (prev7 === 0) return null;
+  return Math.round(((last7 - prev7) / prev7) * 100);
+}
+
 export default async function DashboardPage() {
   const [metrics, signals] = await Promise.all([getDashboardMetrics(), getSignals()]);
+  const vel = velocity(signals);
 
   return (
     <div className="space-y-6">
@@ -15,8 +30,21 @@ export default async function DashboardPage() {
       </div>
 
       <section className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardDescription>Signals</CardDescription>
+            <CardTitle className="flex items-end gap-2 text-3xl">
+              {metrics.signals}
+              {vel !== null && (
+                <span className={`mb-1 flex items-center gap-1 text-sm font-normal ${vel >= 0 ? "text-green-500" : "text-red-400"}`}>
+                  <TrendingUp className="size-3" />
+                  {vel >= 0 ? "+" : ""}{vel}%
+                </span>
+              )}
+            </CardTitle>
+          </CardHeader>
+        </Card>
         {[
-          ["Signals", metrics.signals],
           ["Drafts", metrics.drafts],
           ["Published", metrics.published],
           ["Live Sources", metrics.monitoredSources]

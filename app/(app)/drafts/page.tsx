@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Download, Send } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DraftActionButtons } from "@/components/drafts/draft-action-buttons";
 import { getDrafts } from "@/lib/data/repository";
 
 export default async function DraftsPage() {
@@ -24,7 +23,10 @@ export default async function DraftsPage() {
                   <CardTitle>{draft.title}</CardTitle>
                   <CardDescription>{draft.excerpt}</CardDescription>
                 </div>
-                <Badge variant={draft.status === "approved" ? "success" : "secondary"}>{draft.status}</Badge>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">v{draft.version}</span>
+                  <Badge variant={draft.status === "approved" ? "success" : "secondary"}>{draft.status}</Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -33,15 +35,8 @@ export default async function DraftsPage() {
                 defaultValue={draft.contentMarkdown}
                 aria-label={`${draft.title} Markdown content`}
               />
-              <div className="flex flex-wrap gap-2">
-                <Button variant="secondary">
-                  <Send className="size-4" />
-                  Approve
-                </Button>
-                <Button variant="outline">
-                  <Download className="size-4" />
-                  Export Markdown
-                </Button>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <DraftActionButtons draft={draft} />
                 <Link
                   href={`/blog/${draft.slug}`}
                   className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
