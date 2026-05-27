@@ -1,12 +1,8 @@
-export const maxDuration = 60;
-
-import { NextRequest, NextResponse } from "next/server";
-import { assertCronAuthorized } from "@/lib/jobs/auth";
+import { NextResponse } from "next/server";
 import { detectSignalsJob } from "@/lib/jobs/detect-signals";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    assertCronAuthorized(request);
     return NextResponse.json(await detectSignalsJob());
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });

@@ -38,14 +38,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       publishedTime: draft.publishedAt ?? draft.createdAt,
       modifiedTime: draft.updatedAt,
       tags: draft.tags,
-      images: [
-        {
-          url: `${BASE_URL}/og?title=${encodeURIComponent(draft.seoTitle)}&excerpt=${encodeURIComponent(draft.seoDescription)}`,
-          width: 1200,
-          height: 630,
-          alt: draft.seoTitle
-        }
-      ]
+      images: []
     },
     twitter: {
       card: "summary_large_image",

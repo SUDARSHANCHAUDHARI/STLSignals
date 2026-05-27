@@ -3,44 +3,23 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
-enum SourceType {
-  reddit
-}
-
-enum SignalStatus {
-  new
-  reviewed
-  draft_created
-  published
-  ignored
-}
-
-enum DraftStatus {
-  draft
-  reviewing
-  approved
-  scheduled
-  published
-  archived
-  rejected
-}
+// SQLite: arrays stored as JSON strings; enums stored as plain String
 
 model Source {
-  id             String     @id @default(cuid())
-  type           SourceType @default(reddit)
-  name           String
-  subreddit      String
-  enabled        Boolean    @default(true)
-  keywords       String[]
-  scanFrequency  String     @default("daily")
-  lastFetchedAt  DateTime?
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id            String    @id @default(cuid())
+  type          String    @default("reddit")
+  name          String
+  subreddit     String
+  enabled       Boolean   @default(true)
+  keywords      String    @default("[]")
+  scanFrequency String    @default("daily")
+  lastFetchedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   rawPosts RawPost[]
 }
@@ -57,7 +36,7 @@ model RawPost {
   commentCount   Int      @default(0)
   createdUtc     DateTime
   permalink      String
-  contentSnippet String   @db.VarChar(500)
+  contentSnippet String
   fetchedAt      DateTime @default(now())
 
   source      Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
@@ -69,19 +48,19 @@ model RawPost {
 }
 
 model Signal {
-  id             String       @id @default(cuid())
+  id             String    @id @default(cuid())
   title          String
   summary        String
   topic          String
-  keywords       String[]
+  keywords       String    @default("[]")
   score          Int
   confidence     Float
   sourceCount    Int
-  status         SignalStatus @default(new)
-  researchPacket Json?
+  status         String    @default("new")
+  researchPacket String?
   topicClusterId String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   posts        SignalPost[]
   drafts       Draft[]
@@ -101,21 +80,21 @@ model SignalPost {
 }
 
 model Draft {
-  id              String      @id @default(cuid())
+  id              String    @id @default(cuid())
   signalId        String
   title           String
-  slug            String      @unique
+  slug            String    @unique
   excerpt         String
   contentMarkdown String
   seoTitle        String
   seoDescription  String
-  status          DraftStatus @default(draft)
-  version         Int         @default(1)
+  status          String    @default("draft")
+  version         Int       @default(1)
   editorialNotes  String?
-  tags            String[]    @default([])
-  faqs            Json?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  tags            String    @default("[]")
+  faqs            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   publishedAt     DateTime?
 
   signal     Signal             @relation(fields: [signalId], references: [id], onDelete: Cascade)
@@ -127,7 +106,7 @@ model AuditLog {
   action     String
   entityType String
   entityId   String
-  metadata   Json
+  metadata   String
   createdAt  DateTime @default(now())
 
   @@index([entityType, entityId])
@@ -137,7 +116,7 @@ model TopicCluster {
   id          String   @id @default(cuid())
   topic       String   @unique
   label       String
-  keywords    String[]
+  keywords    String   @default("[]")
   signalCount Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -165,7 +144,7 @@ model SignalAnalytics {
   signalId   String   @unique
   score      Int      @default(0)
   confidence Float    @default(0)
-  embedding  Json?
+  embedding  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

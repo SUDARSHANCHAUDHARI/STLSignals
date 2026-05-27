@@ -1,8 +1,6 @@
-import { createAiProvider } from "@/lib/ai/provider";
 import { prisma } from "@/lib/data/prisma";
 import { getRecentPosts } from "@/lib/data/repository";
 import { inferTopic, scorePosts } from "@/lib/services/signal-scorer";
-import { isDuplicateSignal } from "@/lib/services/duplicate-detector";
 import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
@@ -11,15 +9,13 @@ export async function detectSignalsJob() {
   const logger = createJobLogger("detect-signals");
   const posts = await getRecentPosts();
   logger.info("starting", { postCount: posts.length, mode: useMockMode ? "mock" : "live" });
+
   if (posts.length === 0) {
     logger.info("no posts to process");
     return { ok: true, signals: [] };
   }
 
-  // Cluster posts: LLM in live mode, keyword inference in mock mode
-  const clusters = useMockMode
-    ? keywordCluster(posts)
-    : await clusterWithAI(posts);
+  const clusters = keywordCluster(posts);
 
   const scored = clusters.map((cluster) => {
     const clusterPosts = posts.filter((p) => cluster.postIds.includes(p.id));
@@ -52,24 +48,13 @@ export async function detectSignalsJob() {
             title: signal.title,
             summary: signal.summary,
             topic: signal.topic,
-            keywords: signal.keywords,
+            keywords: JSON.stringify(signal.keywords),
             score: signal.score,
             confidence: signal.confidence,
             sourceCount: signal.sourceCount
           }
         });
         signalId = created.id;
-
-        // Duplicate detection — runs after creation so we have an ID to store the embedding against
-        const candidateText = `${signal.title} ${signal.summary}`;
-        const dupeResult = await isDuplicateSignal(signalId, candidateText);
-        if (dupeResult.isDuplicate) {
-          await prisma.signal.update({
-            where: { id: signalId },
-            data: { status: "ignored" }
-          });
-          continue;
-        }
       }
 
       for (const post of signal.posts) {
@@ -105,14 +90,4 @@ function keywordCluster(posts: ReturnType<typeof Array.prototype.filter>) {
     postIds,
     confidence: 0.7
   }));
-}
-
-async function clusterWithAI(posts: Awaited<ReturnType<typeof getRecentPosts>>) {
-  try {
-    const provider = createAiProvider();
-    return await provider.clusterPosts(posts);
-  } catch {
-    // Fall back to keyword clustering if LLM call fails
-    return keywordCluster(posts);
-  }
 }
