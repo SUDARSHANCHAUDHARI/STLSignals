@@ -26,7 +26,8 @@ export async function generateDraftJob(signalId = "sig-flaky-tests") {
         contentMarkdown: draft.contentMarkdown,
         seoTitle: draft.seoTitle,
         seoDescription: draft.seoDescription,
-        tags: draft.socialSuggestions.slice(0, 5),
+        tags: draft.tags,
+        faqs: draft.faqs,
         version: { increment: 1 }
       },
       create: {
@@ -37,7 +38,8 @@ export async function generateDraftJob(signalId = "sig-flaky-tests") {
         contentMarkdown: draft.contentMarkdown,
         seoTitle: draft.seoTitle,
         seoDescription: draft.seoDescription,
-        tags: draft.socialSuggestions.slice(0, 5),
+        tags: draft.tags,
+        faqs: draft.faqs,
         status: "draft"
       }
     });

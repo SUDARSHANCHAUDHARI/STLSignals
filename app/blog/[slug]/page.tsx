@@ -13,6 +13,8 @@ export async function generateStaticParams() {
   return drafts.map((draft) => ({ slug: draft.slug }));
 }
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://stlsignals.dev";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const draft = await getDraftBySlug(slug);
@@ -20,9 +22,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {};
   }
 
+  const url = `${BASE_URL}/blog/${draft.slug}`;
+
   return {
     title: draft.seoTitle,
-    description: draft.seoDescription
+    description: draft.seoDescription,
+    keywords: draft.tags,
+    openGraph: {
+      type: "article",
+      url,
+      title: draft.seoTitle,
+      description: draft.seoDescription,
+      publishedTime: draft.publishedAt ?? draft.createdAt,
+      modifiedTime: draft.updatedAt,
+      tags: draft.tags
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: draft.seoTitle,
+      description: draft.seoDescription
+    },
+    alternates: {
+      canonical: url
+    }
   };
 }
 

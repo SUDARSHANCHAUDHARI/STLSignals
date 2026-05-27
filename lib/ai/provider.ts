@@ -14,10 +14,24 @@ const DraftSchema = z.object({
   contentMarkdown: z.string(),
   seoTitle: z.string(),
   seoDescription: z.string(),
-  socialSuggestions: z.array(z.string())
+  socialSuggestions: z.array(z.string()),
+  tags: z.array(z.string()).default([]),
+  faqs: z.array(z.object({ question: z.string(), answer: z.string() })).default([])
 });
 
 export type GeneratedDraft = z.infer<typeof DraftSchema>;
+
+const RepurposeSchema = z.object({
+  platforms: z.array(
+    z.object({
+      platform: z.enum(["linkedin", "twitter", "reddit", "newsletter", "video_script", "carousel"]),
+      content: z.string()
+    })
+  )
+});
+
+export type RepurposeDraftInput = { title: string; excerpt: string; contentMarkdown: string; tags: string[] };
+export type PlatformContent = { platform: string; content: string };
 
 const ResearchPacketSchema = z.object({
   trend_summary: z.string(),
@@ -49,6 +63,7 @@ export interface AiProvider {
   summarizeSignal(signal: Signal): Promise<string>;
   generateDraft(signal: Signal, researchPacket?: ResearchPacket): Promise<GeneratedDraft>;
   generateResearchPacket(signal: Signal): Promise<ResearchPacket>;
+  repurposeDraft(draft: RepurposeDraftInput): Promise<PlatformContent[]>;
   clusterPosts(posts: RawPost[]): Promise<TopicCluster[]>;
   getEmbedding(text: string): Promise<number[]>;
 }
@@ -128,6 +143,8 @@ class MockAiProvider implements AiProvider {
       excerpt: signal.suggestedAngle,
       seoTitle: title.slice(0, 65),
       seoDescription: signal.summary.slice(0, 155),
+      tags: signal.keywords.slice(0, 5),
+      faqs: packet.faqs,
       socialSuggestions: [
         `New STL Signals brief: ${signal.suggestedAngle}`,
         `Engineering trend watch: ${signal.keywords.slice(0, 3).join(", ")}`
@@ -163,6 +180,35 @@ class MockAiProvider implements AiProvider {
         "This draft is original analysis generated from metadata, short snippets, and aggregate trend signals. It does not quote or reproduce full Reddit posts or comments."
       ].join("\n")
     };
+  }
+
+  async repurposeDraft(draft: RepurposeDraftInput): Promise<PlatformContent[]> {
+    return [
+      {
+        platform: "linkedin",
+        content: `${draft.title}\n\n${draft.excerpt}\n\nKey topics: ${draft.tags.join(", ")}\n\n#engineering #${draft.tags[0] ?? "tech"}`
+      },
+      {
+        platform: "twitter",
+        content: `${draft.excerpt.slice(0, 220)}\n\n${draft.tags.slice(0, 3).map((t) => `#${t.replace(/\s+/g, "")}`).join(" ")}`
+      },
+      {
+        platform: "reddit",
+        content: `${draft.title}\n\n${draft.excerpt}\n\n*This is original analysis — not a copy of any specific post.*`
+      },
+      {
+        platform: "newsletter",
+        content: `**This week in engineering trends:** ${draft.title}\n\n${draft.excerpt}\n\n${draft.contentMarkdown.slice(0, 800)}`
+      },
+      {
+        platform: "video_script",
+        content: `[INTRO] Today we're covering: ${draft.title}.\n\n[BODY] ${draft.excerpt}\n\n[TAKEAWAY] ${draft.tags.slice(0, 3).join(", ")} are shaping how teams ship software.\n\n[OUTRO] Subscribe for weekly engineering trend briefs.`
+      },
+      {
+        platform: "carousel",
+        content: `Slide 1: ${draft.title}\nSlide 2: ${draft.excerpt}\n${draft.tags.map((t, i) => `Slide ${i + 3}: ${t}`).join("\n")}`
+      }
+    ];
   }
 }
 
@@ -278,7 +324,7 @@ class OpenAiCompatibleProvider implements AiProvider {
         {
           role: "system",
           content:
-            'Create an original engineering blog draft JSON with: title, slug, excerpt, contentMarkdown, seoTitle, seoDescription, socialSuggestions (string[]). Do not copy Reddit posts or comments. Include attribution: "Signals observed from public Reddit discussions". Require human review note at end.'
+            'Create an original engineering blog draft JSON with fields: title (string), slug (kebab-case string), excerpt (string), contentMarkdown (string), seoTitle (string, max 65 chars), seoDescription (string, max 155 chars), socialSuggestions (string[]), tags (string[], 3-6 topic tags), faqs (array of {question,answer}). Do not copy Reddit posts or comments. Include attribution: "Signals observed from public Reddit discussions". End contentMarkdown with an editorial safety note.'
         },
         {
           role: "user",
@@ -297,5 +343,26 @@ class OpenAiCompatibleProvider implements AiProvider {
     });
     const raw = response.choices[0]?.message.content ?? "{}";
     return DraftSchema.parse(JSON.parse(raw));
+  }
+
+  async repurposeDraft(draft: RepurposeDraftInput): Promise<PlatformContent[]> {
+    const response = await this.client.chat.completions.create({
+      model: this.model,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            'Repurpose this engineering blog draft into platform-specific content. Return JSON: { "platforms": [{ "platform": "linkedin"|"twitter"|"reddit"|"newsletter"|"video_script"|"carousel", "content": "..." }] }. Include all 6 platforms. Keep content original — do not reproduce Reddit posts verbatim. Twitter max 280 chars. LinkedIn professional tone. Reddit casual and informative.'
+        },
+        {
+          role: "user",
+          content: JSON.stringify(draft)
+        }
+      ]
+    });
+    const raw = response.choices[0]?.message.content ?? '{"platforms":[]}';
+    const parsed = RepurposeSchema.parse(JSON.parse(raw));
+    return parsed.platforms;
   }
 }
