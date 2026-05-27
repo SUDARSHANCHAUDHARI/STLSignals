@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPublishedDrafts } from "@/lib/data/repository";
 
+export const revalidate = 3600;
+
 export const metadata = {
   title: "STL Signals Blog",
   description: "Original engineering analysis from public trend signals."

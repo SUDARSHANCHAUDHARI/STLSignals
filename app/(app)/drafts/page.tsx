@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { DraftActionButtons } from "@/components/drafts/draft-action-buttons";
-import { getDrafts } from "@/lib/data/repository";
+import { getDraftsPaginated } from "@/lib/data/repository";
 
-export default async function DraftsPage() {
-  const drafts = await getDrafts();
+export default async function DraftsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? "1", 10));
+  const result = await getDraftsPaginated(page, 10);
+  const drafts = result.items;
 
   return (
     <div className="space-y-6">
@@ -48,6 +56,7 @@ export default async function DraftsPage() {
           </Card>
         ))}
       </div>
+      <Pagination page={result.page} totalPages={result.totalPages} buildHref={(p) => `/drafts?page=${p}`} />
     </div>
   );
 }

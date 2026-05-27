@@ -8,12 +8,12 @@ import { slugify } from "@/lib/utils/slug";
 // ─── Schemas ────────────────────────────────────────────────────────────────
 
 const DraftSchema = z.object({
-  title: z.string(),
-  slug: z.string(),
-  excerpt: z.string(),
-  contentMarkdown: z.string(),
-  seoTitle: z.string(),
-  seoDescription: z.string(),
+  title: z.string().min(10),
+  slug: z.string().min(3).regex(/^[a-z0-9-]+$/),
+  excerpt: z.string().min(20),
+  contentMarkdown: z.string().min(200),
+  seoTitle: z.string().min(10).max(65),
+  seoDescription: z.string().min(20).max(155),
   socialSuggestions: z.array(z.string()),
   tags: z.array(z.string()).default([]),
   faqs: z.array(z.object({ question: z.string(), answer: z.string() })).default([])

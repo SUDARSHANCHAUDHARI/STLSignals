@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const revalidate = 3600;
 import rehypeHighlight from "rehype-highlight";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
@@ -35,7 +37,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: draft.seoDescription,
       publishedTime: draft.publishedAt ?? draft.createdAt,
       modifiedTime: draft.updatedAt,
-      tags: draft.tags
+      tags: draft.tags,
+      images: [
+        {
+          url: `${BASE_URL}/og?title=${encodeURIComponent(draft.seoTitle)}&excerpt=${encodeURIComponent(draft.seoDescription)}`,
+          width: 1200,
+          height: 630,
+          alt: draft.seoTitle
+        }
+      ]
     },
     twitter: {
       card: "summary_large_image",
