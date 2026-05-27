@@ -1,3 +1,5 @@
+export const maxDuration = 60;
+
 import { NextRequest, NextResponse } from "next/server";
 import { assertCronAuthorized } from "@/lib/jobs/auth";
 import { fetchRedditPostsJob } from "@/lib/jobs/fetch-reddit-posts";

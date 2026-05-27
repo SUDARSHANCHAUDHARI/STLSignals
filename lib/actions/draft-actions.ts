@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/data/prisma";
+import { sendDraftApprovedEmail } from "@/lib/services/email";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
@@ -10,7 +11,7 @@ export async function approveDraft(draftId: string) {
     return { ok: true, mock: true };
   }
 
-  await prisma.draft.update({
+  const draft = await prisma.draft.update({
     where: { id: draftId },
     data: { status: "approved" }
   });
@@ -23,6 +24,8 @@ export async function approveDraft(draftId: string) {
       metadata: {}
     }
   });
+
+  await sendDraftApprovedEmail(draft.title, draft.slug).catch(() => {});
 
   revalidatePath("/drafts");
   return { ok: true };
