@@ -5,8 +5,6 @@
  * Requires REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET in .env
  */
 
-import "dotenv/config";
-
 const CLIENT_ID = process.env.REDDIT_CLIENT_ID;
 const CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
 const USER_AGENT = process.env.REDDIT_USER_AGENT ?? "STLSignals/0.1 by SudarshanTechLabs";

@@ -2,6 +2,15 @@
 .flow/
 prompts/
 
+# SQLite database (local only)
+stl-signals.db
+stl-signals.db-journal
+stl-signals.db-wal
+stl-signals.db-shm
+
+# Generated markdown exports (push to your blog repo separately)
+posts/
+
 # Dependencies
 node_modules/
 .pnp

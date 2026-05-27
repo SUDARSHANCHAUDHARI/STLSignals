@@ -83,11 +83,18 @@ export async function createDraft(formData: FormData) {
       }
     });
 
-    await prisma.auditLog.create({
-      data: { action: "draft_created", entityType: "draft", entityId: draft.id, metadata: "{}" }
-    });
+    await Promise.all([
+      prisma.auditLog.create({
+        data: { action: "draft_created", entityType: "draft", entityId: draft.id, metadata: "{}" }
+      }),
+      prisma.signal.update({
+        where: { id: signalId },
+        data: { status: "draft_created" }
+      })
+    ]);
 
     revalidatePath("/drafts");
+    revalidatePath("/signals");
     return { ok: true, id: draft.id };
   } catch (err) {
     if ((err as { code?: string }).code === "P2002") {
@@ -95,6 +102,23 @@ export async function createDraft(formData: FormData) {
     }
     return { ok: false, error: "Failed to save draft" };
   }
+}
+
+// ── Update ────────────────────────────────────────────────────────────────────
+
+export async function updateDraft(draftId: string, formData: FormData) {
+  if (useMockMode) return { ok: true, mock: true };
+
+  const contentMarkdown = (formData.get("contentMarkdown") as string | null)?.trim() ?? "";
+  if (!contentMarkdown) return { ok: false, error: "Content cannot be empty" };
+
+  await prisma.draft.update({
+    where: { id: draftId },
+    data: { contentMarkdown, version: { increment: 1 } }
+  });
+
+  revalidatePath("/drafts");
+  return { ok: true };
 }
 
 // ── Save to disk ──────────────────────────────────────────────────────────────

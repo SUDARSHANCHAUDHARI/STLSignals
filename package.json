@@ -12,9 +12,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed": "tsx scripts/seed.ts",
-    "pipeline": "tsx scripts/run-pipeline.ts",
+    "pipeline": "tsx --env-file=.env scripts/run-pipeline.ts",
     "setup": "bash scripts/setup.sh",
-    "reddit:test": "tsx scripts/test-reddit.ts",
+    "reddit:test": "tsx --env-file=.env scripts/test-reddit.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
