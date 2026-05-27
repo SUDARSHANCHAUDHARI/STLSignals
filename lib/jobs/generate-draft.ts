@@ -2,12 +2,17 @@ import { createAiProvider } from "@/lib/ai/provider";
 import { prisma } from "@/lib/data/prisma";
 import { getSignal } from "@/lib/data/repository";
 import { getOrGenerateResearchPacket } from "@/lib/services/research-packet";
+import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
 export async function generateDraftJob(signalId = "sig-flaky-tests") {
+  const logger = createJobLogger("generate-draft");
+  logger.info("starting", { signalId, mode: useMockMode ? "mock" : "live" });
+
   const signal = await getSignal(signalId);
   if (!signal) {
+    logger.error("signal not found", { signalId });
     throw new Error(`Signal not found: ${signalId}`);
   }
 
@@ -59,5 +64,6 @@ export async function generateDraftJob(signalId = "sig-flaky-tests") {
     });
   }
 
+  logger.done("complete", { signalId, slug: draft.slug, tags: draft.tags.length, faqs: draft.faqs.length });
   return { ok: true, draft, manualReviewRequired: true };
 }

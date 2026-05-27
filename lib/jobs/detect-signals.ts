@@ -3,12 +3,18 @@ import { prisma } from "@/lib/data/prisma";
 import { getRecentPosts } from "@/lib/data/repository";
 import { inferTopic, scorePosts } from "@/lib/services/signal-scorer";
 import { isDuplicateSignal } from "@/lib/services/duplicate-detector";
+import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
 export async function detectSignalsJob() {
+  const logger = createJobLogger("detect-signals");
   const posts = await getRecentPosts();
-  if (posts.length === 0) return { ok: true, signals: [] };
+  logger.info("starting", { postCount: posts.length, mode: useMockMode ? "mock" : "live" });
+  if (posts.length === 0) {
+    logger.info("no posts to process");
+    return { ok: true, signals: [] };
+  }
 
   // Cluster posts: LLM in live mode, keyword inference in mock mode
   const clusters = useMockMode
@@ -76,12 +82,14 @@ export async function detectSignalsJob() {
     }
   }
 
-  return {
+  const output = {
     ok: true,
     signals: scored.map(({ topic, title, summary, keywords, score, confidence, sourceCount }) => ({
       topic, title, summary, keywords, score, confidence, sourceCount
     }))
   };
+  logger.done("complete", { clustersDetected: output.signals.length });
+  return output;
 }
 
 function keywordCluster(posts: ReturnType<typeof Array.prototype.filter>) {

@@ -1,14 +1,19 @@
 import { prisma } from "@/lib/data/prisma";
 import { getSources } from "@/lib/data/repository";
 import { fetchRedditPostsForSubreddit } from "@/lib/reddit/client";
+import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
 export async function fetchRedditPostsJob() {
+  const logger = createJobLogger("fetch-reddit-posts");
   const sources = (await getSources()).filter((source) => source.enabled && source.type === "reddit");
+  logger.info("starting", { sourceCount: sources.length, mode: useMockMode ? "mock" : "live" });
+
   const results = [];
 
   for (const source of sources) {
+    logger.info("fetching subreddit", { subreddit: source.subreddit });
     const posts = await withBackoff(() =>
       fetchRedditPostsForSubreddit(source.subreddit, source.keywords)
     );
@@ -50,6 +55,7 @@ export async function fetchRedditPostsJob() {
     });
   }
 
+  logger.done("complete", { sources: results.length, totalFetched: results.reduce((n, r) => n + r.fetched, 0) });
   return { ok: true, results };
 }
 
