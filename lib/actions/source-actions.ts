@@ -44,7 +44,7 @@ export async function addSource(formData: FormData) {
       type: "reddit",
       name: parsed.data.name,
       subreddit: parsed.data.subreddit,
-      keywords: parsed.data.keywords,
+      keywords: JSON.stringify(parsed.data.keywords),
       enabled: true,
       scanFrequency: "daily"
     }

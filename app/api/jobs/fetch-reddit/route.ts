@@ -1,12 +1,8 @@
-export const maxDuration = 60;
-
-import { NextRequest, NextResponse } from "next/server";
-import { assertCronAuthorized } from "@/lib/jobs/auth";
+import { NextResponse } from "next/server";
 import { fetchRedditPostsJob } from "@/lib/jobs/fetch-reddit-posts";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    assertCronAuthorized(request);
     return NextResponse.json(await fetchRedditPostsJob());
   } catch (error) {
     return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });

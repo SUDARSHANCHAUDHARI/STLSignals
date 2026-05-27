@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import type { ResearchPacket } from "@/lib/data/types";
+import type { ResearchPacket, SignalStatus, DraftStatus } from "@/lib/data/types";
 import { mockDrafts, mockPosts, mockSignals, mockSources } from "@/lib/data/mock";
 import { prisma } from "@/lib/data/prisma";
 import type { DashboardMetrics, Draft, Signal, Source } from "@/lib/data/types";
@@ -11,6 +11,15 @@ type PrismaSignalWithPosts = Prisma.SignalGetPayload<{
 }>;
 
 type PrismaDraft = Prisma.DraftGetPayload<Record<never, never>>;
+
+function parseJsonArray(value: string): string[] {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 function mapRawPost(rawPost: Prisma.RawPostGetPayload<Record<never, never>>) {
   return {
@@ -36,17 +45,19 @@ function mapSignal(signal: PrismaSignalWithPosts): Signal {
     title: signal.title,
     summary: signal.summary,
     topic: signal.topic,
-    keywords: signal.keywords,
+    keywords: parseJsonArray(signal.keywords),
     score: signal.score,
     confidence: signal.confidence,
     sourceCount: signal.sourceCount,
-    status: signal.status,
+    status: signal.status as SignalStatus,
     createdAt: signal.createdAt.toISOString(),
     updatedAt: signal.updatedAt.toISOString(),
     posts: signal.posts.map(({ rawPost }) => mapRawPost(rawPost)),
     suggestedAngle: `Turn this ${signal.topic} signal into a practical engineering brief.`,
     topicClusterId: signal.topicClusterId ?? undefined,
-    researchPacket: (signal.researchPacket as ResearchPacket) ?? undefined
+    researchPacket: signal.researchPacket
+      ? (JSON.parse(signal.researchPacket) as ResearchPacket)
+      : undefined
   };
 }
 
@@ -60,11 +71,13 @@ function mapDraft(draft: PrismaDraft): Draft {
     contentMarkdown: draft.contentMarkdown,
     seoTitle: draft.seoTitle,
     seoDescription: draft.seoDescription,
-    status: draft.status,
+    status: draft.status as DraftStatus,
     version: draft.version,
     editorialNotes: draft.editorialNotes,
-    tags: draft.tags,
-    faqs: draft.faqs as Array<{ question: string; answer: string }> | null,
+    tags: parseJsonArray(draft.tags),
+    faqs: draft.faqs
+      ? (JSON.parse(draft.faqs) as Array<{ question: string; answer: string }>)
+      : null,
     createdAt: draft.createdAt.toISOString(),
     updatedAt: draft.updatedAt.toISOString(),
     publishedAt: draft.publishedAt?.toISOString() ?? null
@@ -82,11 +95,11 @@ export async function getSources(): Promise<Source[]> {
 
   return sources.map((source) => ({
     id: source.id,
-    type: source.type,
+    type: source.type as "reddit",
     name: source.name,
     subreddit: source.subreddit,
     enabled: source.enabled,
-    keywords: source.keywords,
+    keywords: parseJsonArray(source.keywords),
     scanFrequency: source.scanFrequency,
     lastFetchedAt: source.lastFetchedAt?.toISOString() ?? null,
     createdAt: source.createdAt.toISOString(),
@@ -216,11 +229,12 @@ export async function searchSignals(q: string): Promise<Signal[]> {
     );
   }
 
+  // SQLite LIKE is case-insensitive for ASCII by default
   const signals = await prisma.signal.findMany({
     where: {
       OR: [
-        { title: { contains: q, mode: "insensitive" } },
-        { summary: { contains: q, mode: "insensitive" } }
+        { title: { contains: q } },
+        { summary: { contains: q } }
       ]
     },
     include: { posts: { include: { rawPost: true } } },
@@ -242,9 +256,9 @@ export async function searchDrafts(q: string): Promise<Draft[]> {
   const drafts = await prisma.draft.findMany({
     where: {
       OR: [
-        { title: { contains: q, mode: "insensitive" } },
-        { excerpt: { contains: q, mode: "insensitive" } },
-        { contentMarkdown: { contains: q, mode: "insensitive" } }
+        { title: { contains: q } },
+        { excerpt: { contains: q } },
+        { contentMarkdown: { contains: q } }
       ]
     },
     orderBy: [{ updatedAt: "desc" }],

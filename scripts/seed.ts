@@ -10,7 +10,7 @@ async function main() {
       id: "seed-reddit-quality",
       name: "Quality Engineering Signals",
       subreddit: "QualityAssurance",
-      keywords: ["qa", "testing", "automation", "ci"],
+      keywords: JSON.stringify(["qa", "testing", "automation", "ci"]),
       scanFrequency: "daily"
     }
   });
@@ -41,7 +41,7 @@ async function main() {
       title: "Flaky test ownership is becoming an AI-era QA priority",
       topic: "quality-engineering",
       summary: "Engineering teams are looking for better ways to connect flaky tests to ownership, deployment risk, and AI-assisted code changes.",
-      keywords: ["flaky tests", "ownership", "ci", "ai coding"],
+      keywords: JSON.stringify(["flaky tests", "ownership", "ci", "ai coding"]),
       score: 86,
       confidence: 0.78,
       sourceCount: 1
