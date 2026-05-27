@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
 import { DraftActionButtons } from "@/components/drafts/draft-action-buttons";
+import { DraftEditPanel } from "@/components/drafts/draft-edit-panel";
 import { getDraftsPaginated } from "@/lib/data/repository";
 
 export default async function DraftsPage({
@@ -38,10 +39,10 @@ export default async function DraftsPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <textarea
-                className="min-h-64 w-full rounded-md border border-input bg-background p-3 font-mono text-sm leading-6"
-                defaultValue={draft.contentMarkdown}
-                aria-label={`${draft.title} Markdown content`}
+              <DraftEditPanel
+                draftId={draft.id}
+                initialContent={draft.contentMarkdown}
+                ariaLabel={`${draft.title} Markdown content`}
               />
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <DraftActionButtons draft={draft} />
