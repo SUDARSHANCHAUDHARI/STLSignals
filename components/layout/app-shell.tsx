@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { BarChart3, FileText, Gauge, LayoutList, LineChart, RadioTower, Settings, Sparkles } from "lucide-react";
+import { MobileNav } from "@/components/layout/mobile-nav";
 
 const navItems: Array<{ href: Route; label: string; icon: typeof Gauge }> = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge },
@@ -37,10 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 border-b border-border bg-background/85 px-4 py-3 backdrop-blur lg:hidden">
-          <Link href="/dashboard" className="flex items-center gap-2 text-sm font-semibold">
-            <Sparkles className="size-4" />
-            STL Signals
-          </Link>
+          <MobileNav />
         </header>
         <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
       </div>
