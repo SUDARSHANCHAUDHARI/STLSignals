@@ -1,6 +1,6 @@
 import type { Draft, RawPost, Signal, Source } from "@/lib/data/types";
 
-export const mockSources: Source[] = [
+export const mockSources = [
   {
     id: "src-reddit-qa",
     type: "reddit",
@@ -34,9 +34,9 @@ export const mockSources: Source[] = [
     createdAt: "2026-05-18T08:00:00.000Z",
     updatedAt: "2026-05-24T08:00:00.000Z"
   }
-];
+] satisfies Source[];
 
-export const mockPosts: RawPost[] = [
+export const mockPosts = [
   {
     id: "post-1",
     sourceId: "src-reddit-qa",
@@ -82,9 +82,9 @@ export const mockPosts: RawPost[] = [
     contentSnippet: "Short signal snippet only: public thread metadata points to practical guardrails for local tooling.",
     fetchedAt: "2026-05-24T13:00:00.000Z"
   }
-];
+] satisfies RawPost[];
 
-export const mockSignals: Signal[] = [
+export const mockSignals = [
   {
     id: "sig-flaky-tests",
     title: "Flaky test ownership is becoming an AI-era QA priority",
@@ -133,9 +133,9 @@ export const mockSignals: Signal[] = [
     posts: [mockPosts[2]],
     suggestedAngle: "Minimum viable secret scanning for indie and small engineering teams."
   }
-];
+] satisfies Signal[];
 
-export const mockDrafts: Draft[] = [
+export const mockDrafts = [
   {
     id: "draft-flaky-tests",
     signalId: "sig-flaky-tests",
@@ -149,6 +149,13 @@ export const mockDrafts: Draft[] = [
     seoDescription:
       "A practical QA guide to reducing flaky test risk as AI-assisted development increases CI velocity.",
     status: "approved",
+    version: 1,
+    editorialNotes: null,
+    tags: ["qa", "testing", "ai-coding", "ci"],
+    faqs: [
+      { question: "What makes a test flaky?", answer: "Non-deterministic behavior caused by timing, state leakage, or environment differences." },
+      { question: "How should flaky test ownership work?", answer: "Ownership should follow the team that last touched the code the test covers." }
+    ],
     createdAt: "2026-05-24T14:00:00.000Z",
     updatedAt: "2026-05-24T14:20:00.000Z",
     publishedAt: null
@@ -166,8 +173,12 @@ export const mockDrafts: Draft[] = [
     seoDescription:
       "How platform teams can design practical AI tool governance without blocking developer productivity.",
     status: "draft",
+    version: 1,
+    editorialNotes: null,
+    tags: ["ai-governance", "platform-engineering", "developer-experience"],
+    faqs: null,
     createdAt: "2026-05-24T15:00:00.000Z",
     updatedAt: "2026-05-24T15:00:00.000Z",
     publishedAt: null
   }
-];
+] satisfies Draft[];

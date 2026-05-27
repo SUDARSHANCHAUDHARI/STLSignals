@@ -1,4 +1,8 @@
+import { prisma } from "@/lib/data/prisma";
 import { getRecentPosts } from "@/lib/data/repository";
+import { inferTopic, scorePosts } from "@/lib/services/signal-scorer";
+
+const useMockMode = process.env.MOCK_MODE !== "false";
 
 export async function detectSignalsJob() {
   const posts = await getRecentPosts();
@@ -9,37 +13,59 @@ export async function detectSignalsJob() {
     grouped.set(topic, [...(grouped.get(topic) ?? []), post]);
   }
 
-  const signals = [...grouped.entries()].map(([topic, topicPosts]) => {
-    const engagement = topicPosts.reduce((total, post) => total + post.score + post.commentCount * 2, 0);
-    return {
-      topic,
-      title: topicToTitle(topic),
-      sourceCount: topicPosts.length,
-      score: Math.min(100, Math.round(40 + topicPosts.length * 12 + engagement / 20)),
-      postIds: topicPosts.map((post) => post.id)
-    };
-  });
+  const scored = [...grouped.entries()].map(([topic, topicPosts]) =>
+    scorePosts(topic, topicPosts)
+  );
 
-  // TODO: Persist Signal and SignalPost rows after replacing mock repository functions.
-  return { ok: true, signals };
-}
+  if (!useMockMode) {
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-function inferTopic(title: string) {
-  const lower = title.toLowerCase();
-  if (lower.includes("flaky") || lower.includes("qa") || lower.includes("test")) {
-    return "quality-engineering";
+    for (const signal of scored) {
+      const existing = await prisma.signal.findFirst({
+        where: { topic: signal.topic, createdAt: { gte: oneDayAgo } }
+      });
+
+      let signalId: string;
+
+      if (existing) {
+        await prisma.signal.update({
+          where: { id: existing.id },
+          data: {
+            score: signal.score,
+            confidence: signal.confidence,
+            sourceCount: signal.sourceCount
+          }
+        });
+        signalId = existing.id;
+      } else {
+        const created = await prisma.signal.create({
+          data: {
+            title: signal.title,
+            summary: signal.summary,
+            topic: signal.topic,
+            keywords: signal.keywords,
+            score: signal.score,
+            confidence: signal.confidence,
+            sourceCount: signal.sourceCount
+          }
+        });
+        signalId = created.id;
+      }
+
+      for (const post of signal.posts) {
+        await prisma.signalPost.upsert({
+          where: { signalId_rawPostId: { signalId, rawPostId: post.id } },
+          update: {},
+          create: { signalId, rawPostId: post.id }
+        });
+      }
+    }
   }
-  if (lower.includes("secret") || lower.includes("security")) {
-    return "cybersecurity";
-  }
-  return "developer-tooling";
-}
 
-function topicToTitle(topic: string) {
-  const titles: Record<string, string> = {
-    "quality-engineering": "Quality engineering workflow changes are gaining attention",
-    cybersecurity: "Repository security guardrails are becoming baseline practice",
-    "developer-tooling": "Developer platform teams are absorbing AI governance work"
+  return {
+    ok: true,
+    signals: scored.map(({ topic, title, summary, keywords, score, confidence, sourceCount }) => ({
+      topic, title, summary, keywords, score, confidence, sourceCount
+    }))
   };
-  return titles[topic] ?? "Engineering trend detected";
 }

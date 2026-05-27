@@ -1,6 +1,6 @@
 export type SourceStatus = "enabled" | "disabled";
 export type SignalStatus = "new" | "reviewed" | "draft_created" | "published" | "ignored";
-export type DraftStatus = "draft" | "approved" | "published";
+export type DraftStatus = "draft" | "reviewing" | "approved" | "scheduled" | "published" | "archived" | "rejected";
 
 export type Source = {
   id: string;
@@ -44,6 +44,8 @@ export type Signal = {
   updatedAt: string;
   posts: RawPost[];
   suggestedAngle: string;
+  topicClusterId?: string;
+  researchPacket?: Record<string, unknown>;
 };
 
 export type Draft = {
@@ -56,6 +58,10 @@ export type Draft = {
   seoTitle: string;
   seoDescription: string;
   status: DraftStatus;
+  version: number;
+  editorialNotes: string | null;
+  tags: string[];
+  faqs: Array<{ question: string; answer: string }> | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;

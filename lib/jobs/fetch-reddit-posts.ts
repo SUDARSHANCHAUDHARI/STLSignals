@@ -1,5 +1,8 @@
+import { prisma } from "@/lib/data/prisma";
 import { getSources } from "@/lib/data/repository";
 import { fetchRedditPostsForSubreddit } from "@/lib/reddit/client";
+
+const useMockMode = process.env.MOCK_MODE !== "false";
 
 export async function fetchRedditPostsJob() {
   const sources = (await getSources()).filter((source) => source.enabled && source.type === "reddit");
@@ -10,15 +13,41 @@ export async function fetchRedditPostsJob() {
       fetchRedditPostsForSubreddit(source.subreddit, source.keywords)
     );
 
+    let stored = 0;
+    if (!useMockMode) {
+      for (const post of posts) {
+        await prisma.rawPost.upsert({
+          where: { externalId: post.externalId },
+          update: {
+            score: post.score,
+            commentCount: post.commentCount,
+            contentSnippet: post.contentSnippet
+          },
+          create: {
+            sourceId: source.id,
+            externalId: post.externalId,
+            title: post.title,
+            url: post.url,
+            subreddit: post.subreddit,
+            authorHash: post.authorHash,
+            score: post.score,
+            commentCount: post.commentCount,
+            createdUtc: post.createdUtc,
+            permalink: post.permalink,
+            contentSnippet: post.contentSnippet
+          }
+        });
+        stored++;
+      }
+    }
+
     results.push({
       sourceId: source.id,
       subreddit: source.subreddit,
       fetched: posts.length,
-      stored: posts.length,
-      mode: process.env.MOCK_MODE !== "false" ? "mock" : "live"
+      stored: useMockMode ? 0 : stored,
+      mode: useMockMode ? "mock" : "live"
     });
-
-    // TODO: Persist with Prisma upsert by externalId.
   }
 
   return { ok: true, results };
