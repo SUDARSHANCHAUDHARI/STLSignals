@@ -1,6 +1,7 @@
 import { createAiProvider } from "@/lib/ai/provider";
 import { prisma } from "@/lib/data/prisma";
 import { getSignal } from "@/lib/data/repository";
+import { getOrGenerateResearchPacket } from "@/lib/services/research-packet";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
@@ -10,8 +11,11 @@ export async function generateDraftJob(signalId = "sig-flaky-tests") {
     throw new Error(`Signal not found: ${signalId}`);
   }
 
+  // Ensure research packet exists before generating draft
+  const researchPacket = await getOrGenerateResearchPacket(signal);
+
   const provider = createAiProvider();
-  const draft = await provider.generateDraft(signal);
+  const draft = await provider.generateDraft(signal, researchPacket);
 
   if (!useMockMode) {
     const saved = await prisma.draft.upsert({
@@ -46,7 +50,8 @@ export async function generateDraftJob(signalId = "sig-flaky-tests") {
         metadata: {
           signalId: signal.id,
           signalTitle: signal.title,
-          draftSlug: saved.slug
+          draftSlug: saved.slug,
+          hadResearchPacket: !!signal.researchPacket
         }
       }
     });

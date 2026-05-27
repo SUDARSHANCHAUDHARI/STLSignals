@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client";
+import type { ResearchPacket } from "@/lib/data/types";
 import { mockDrafts, mockPosts, mockSignals, mockSources } from "@/lib/data/mock";
 import { prisma } from "@/lib/data/prisma";
 import type { DashboardMetrics, Draft, Signal, Source } from "@/lib/data/types";
@@ -45,7 +46,7 @@ function mapSignal(signal: PrismaSignalWithPosts): Signal {
     posts: signal.posts.map(({ rawPost }) => mapRawPost(rawPost)),
     suggestedAngle: `Turn this ${signal.topic} signal into a practical engineering brief.`,
     topicClusterId: signal.topicClusterId ?? undefined,
-    researchPacket: (signal.researchPacket as Record<string, unknown>) ?? undefined
+    researchPacket: (signal.researchPacket as ResearchPacket) ?? undefined
   };
 }
 

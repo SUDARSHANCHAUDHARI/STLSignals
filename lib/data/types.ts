@@ -45,7 +45,7 @@ export type Signal = {
   posts: RawPost[];
   suggestedAngle: string;
   topicClusterId?: string;
-  researchPacket?: Record<string, unknown>;
+  researchPacket?: ResearchPacket;
 };
 
 export type Draft = {
@@ -65,6 +65,26 @@ export type Draft = {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+};
+
+export type ResearchPacket = {
+  trend_summary: string;
+  recurring_opinions: string[];
+  opposing_viewpoints: string[];
+  key_tools: string[];
+  faqs: Array<{ question: string; answer: string }>;
+  technical_concepts: string[];
+  risks: string[];
+  opportunities: string[];
+  why_it_matters: string;
+};
+
+export type TopicCluster = {
+  topic: string;
+  label: string;
+  keywords: string[];
+  postIds: string[];
+  confidence: number;
 };
 
 export type DashboardMetrics = {
