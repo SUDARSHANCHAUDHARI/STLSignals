@@ -1,9 +1,8 @@
-import { Plus, Save } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SourceForm } from "@/components/sources/source-form";
 import { getSources } from "@/lib/data/repository";
 
 export default async function SourcesPage() {
@@ -16,10 +15,10 @@ export default async function SourcesPage() {
           <h1 className="text-3xl font-semibold tracking-normal">Sources</h1>
           <p className="text-sm text-muted-foreground">Configure monitored subreddits, keywords, and scan cadence.</p>
         </div>
-        <Button>
-          <Plus className="size-4" />
-          Add source
-        </Button>
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Plus className="size-3" />
+          Add via form below
+        </div>
       </div>
 
       <Card>
@@ -67,19 +66,11 @@ export default async function SourcesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Add or Edit Source</CardTitle>
-          <CardDescription>Form wiring is ready for a server action once persistence is enabled.</CardDescription>
+          <CardTitle>Add Source</CardTitle>
+          <CardDescription>Adds a new monitored subreddit. Requires live persistence mode.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="grid gap-3 md:grid-cols-5">
-            <Input placeholder="Source name" aria-label="Source name" />
-            <Input placeholder="Subreddit" aria-label="Subreddit" />
-            <Input className="md:col-span-2" placeholder="keywords, comma separated" aria-label="Keywords" />
-            <Button type="button" variant="secondary">
-              <Save className="size-4" />
-              Save
-            </Button>
-          </form>
+          <SourceForm />
         </CardContent>
       </Card>
     </div>
