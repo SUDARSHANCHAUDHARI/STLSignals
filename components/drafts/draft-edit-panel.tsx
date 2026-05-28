@@ -10,12 +10,19 @@ interface Props {
   ariaLabel: string;
 }
 
+function readTime(text: string) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  const mins = Math.max(1, Math.round(words / 200));
+  return { words, mins };
+}
+
 export function DraftEditPanel({ draftId, initialContent, ariaLabel }: Props) {
   const [content, setContent] = useState(initialContent);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isDirty = content !== initialContent;
+  const { words, mins } = readTime(content);
 
   function handleSave() {
     setSaved(false);
@@ -50,8 +57,11 @@ export function DraftEditPanel({ draftId, initialContent, ariaLabel }: Props) {
           {saved ? <Check className="size-3 text-green-400" /> : <Save className="size-3" />}
           {isPending ? "Saving…" : saved ? "Saved" : "Save changes"}
         </button>
+        <span className="text-xs text-muted-foreground">
+          {words.toLocaleString()} words · {mins} min read
+        </span>
         {isDirty && !saved && (
-          <span className="text-xs text-muted-foreground">Unsaved changes</span>
+          <span className="text-xs text-muted-foreground">· Unsaved changes</span>
         )}
         {error && <span className="text-xs text-destructive">{error}</span>}
       </div>

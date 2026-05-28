@@ -16,6 +16,7 @@
     "pipeline": "tsx --env-file=.env scripts/run-pipeline.ts",
     "setup": "bash scripts/setup.sh",
     "reddit:test": "tsx --env-file=.env scripts/test-reddit.ts",
+    "export:all": "tsx --env-file=.env scripts/export-all.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
