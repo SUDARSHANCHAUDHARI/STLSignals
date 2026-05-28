@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { Route } from "next";
+import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
@@ -22,6 +24,22 @@ export default async function DraftsPage({
         <h1 className="text-3xl font-semibold tracking-normal">Drafts</h1>
         <p className="text-sm text-muted-foreground">Human-reviewed drafts can be approved, published, or exported as Markdown.</p>
       </div>
+
+      {drafts.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+          <FileText className="mb-3 size-10 text-muted-foreground/40" />
+          <p className="font-medium">No drafts yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pick a signal, copy the Claude prompt, and paste the output to create your first draft.
+          </p>
+          <Link
+            href={"/signals" as Route}
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Browse signals →
+          </Link>
+        </div>
+      )}
 
       <div className="grid gap-4">
         {drafts.map((draft) => (
@@ -47,7 +65,7 @@ export default async function DraftsPage({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <DraftActionButtons draft={draft} />
                 <Link
-                  href={`/blog/${draft.slug}`}
+                  href={`/blog/${draft.slug}` as Route}
                   className="inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   Preview public page
@@ -57,7 +75,10 @@ export default async function DraftsPage({
           </Card>
         ))}
       </div>
-      <Pagination page={result.page} totalPages={result.totalPages} buildHref={(p) => `/drafts?page=${p}`} />
+
+      {result.totalPages > 1 && (
+        <Pagination page={result.page} totalPages={result.totalPages} buildHref={(p) => `/drafts?page=${p}`} />
+      )}
     </div>
   );
 }

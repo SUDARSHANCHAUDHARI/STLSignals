@@ -5,6 +5,7 @@ import { ArrowLeft, PenLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClaudePromptPanel } from "@/components/signals/claude-prompt-panel";
+import { SignalActionButtons } from "@/components/signals/signal-action-buttons";
 import { getSignal } from "@/lib/data/repository";
 import type { Signal } from "@/lib/data/types";
 
@@ -79,7 +80,7 @@ export default async function SignalDetailPage({
           <h1 className="text-2xl font-semibold tracking-normal">{signal.title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{signal.topic}</p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <Badge variant={signal.status === "new" ? "warning" : "secondary"}>{signal.status}</Badge>
           <Link
             href={`/drafts/new?signalId=${signal.id}` as Route}
@@ -88,6 +89,7 @@ export default async function SignalDetailPage({
             <PenLine className="size-4" />
             Create draft
           </Link>
+          <SignalActionButtons signalId={signal.id} status={signal.status} />
         </div>
       </div>
 

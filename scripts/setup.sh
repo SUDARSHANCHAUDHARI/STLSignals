@@ -14,8 +14,8 @@ fi
 export DATABASE_URL="${DATABASE_URL:-file:./stl-signals.db}"
 
 echo ""
-echo "Running database migrations..."
-DATABASE_URL="$DATABASE_URL" npx prisma migrate dev --name init
+echo "Pushing schema to database (non-interactive)..."
+DATABASE_URL="$DATABASE_URL" npx prisma db push
 
 echo ""
 echo "Seeding database with sample data..."
@@ -23,6 +23,6 @@ DATABASE_URL="$DATABASE_URL" npx tsx scripts/seed.ts
 
 echo ""
 echo "=== Setup complete ==="
-echo "  pnpm dev        → start dashboard at http://localhost:3000"
-echo "  pnpm pipeline   → fetch Reddit posts + detect signals"
+echo "  pnpm dev         → start dashboard at http://localhost:3000"
+echo "  pnpm pipeline    → fetch Reddit posts + detect signals"
 echo "  pnpm reddit:test → smoke-test Reddit OAuth credentials"

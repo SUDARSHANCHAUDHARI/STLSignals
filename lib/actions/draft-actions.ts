@@ -104,6 +104,16 @@ export async function createDraft(formData: FormData) {
   }
 }
 
+// ── Delete ────────────────────────────────────────────────────────────────────
+
+export async function deleteDraft(draftId: string) {
+  if (useMockMode) return { ok: true, mock: true };
+
+  await prisma.draft.delete({ where: { id: draftId } });
+  revalidatePath("/drafts");
+  return { ok: true };
+}
+
 // ── Update ────────────────────────────────────────────────────────────────────
 
 export async function updateDraft(draftId: string, formData: FormData) {
