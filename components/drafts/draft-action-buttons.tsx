@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Download, HardDrive, Send, XCircle, Zap } from "lucide-react";
+import { CheckCircle, Download, HardDrive, Send, Trash2, XCircle, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { approveDraft, rejectDraft, saveDraftToFile, publishToGhost } from "@/lib/actions/draft-actions";
+import { approveDraft, rejectDraft, saveDraftToFile, publishToGhost, deleteDraft } from "@/lib/actions/draft-actions";
 import type { Draft } from "@/lib/data/types";
 
 interface Props {
@@ -85,6 +85,18 @@ export function DraftActionButtons({ draft }: Props) {
         >
           <Zap className="size-4" />
           {pending === "ghost" ? "Publishing…" : "Ghost CMS"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (!confirm("Delete this draft? This cannot be undone.")) return;
+            wrap("reject", () => deleteDraft(draft.id), () => "Deleted");
+          }}
+          disabled={pending !== null}
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="size-4" />
+          Delete
         </Button>
       </div>
       {feedback && (

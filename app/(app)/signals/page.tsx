@@ -1,23 +1,36 @@
 import Link from "next/link";
 import type { Route } from "next";
+import { BarChart3 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination } from "@/components/ui/pagination";
-import { getSignalsPaginated, searchSignals } from "@/lib/data/repository";
+import { getSignalsPaginated, searchSignals, getSignalsByStatus } from "@/lib/data/repository";
 
 const PAGE_SIZE = 15;
+
+const STATUS_TABS = [
+  { label: "All", value: "" },
+  { label: "New", value: "new" },
+  { label: "Draft created", value: "draft_created" },
+  { label: "Ignored", value: "ignored" }
+] as const;
 
 export default async function SignalsPage({
   searchParams
 }: {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; status?: string }>;
 }) {
-  const { page: pageParam, q } = await searchParams;
+  const { page: pageParam, q, status } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10));
 
-  const result = q
-    ? { items: await searchSignals(q), total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 }
-    : await getSignalsPaginated(page, PAGE_SIZE);
+  const result =
+    q
+      ? { items: await searchSignals(q), total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 }
+      : status
+      ? { items: await getSignalsByStatus(status), total: 0, page: 1, pageSize: PAGE_SIZE, totalPages: 1 }
+      : await getSignalsPaginated(page, PAGE_SIZE);
+
+  const activeStatus = status ?? "";
 
   return (
     <div className="space-y-6">
@@ -44,6 +57,48 @@ export default async function SignalsPage({
           )}
         </form>
       </div>
+
+      {/* Status filter tabs */}
+      {!q && (
+        <div className="flex gap-1 border-b border-border pb-1">
+          {STATUS_TABS.map((tab) => (
+            <Link
+              key={tab.value}
+              href={tab.value ? (`/signals?status=${tab.value}` as Route) : ("/signals" as Route)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                activeStatus === tab.value
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {result.items.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
+          <BarChart3 className="mb-3 size-10 text-muted-foreground/40" />
+          <p className="font-medium">
+            {q ? `No signals matching "${q}"` : status ? `No ${status.replace("_", " ")} signals` : "No signals yet"}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {q || status
+              ? "Try a different search or filter."
+              : "Add Reddit sources then run the pipeline to discover trending topics."}
+          </p>
+          {!q && !status && (
+            <Link
+              href={"/settings" as Route}
+              className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            >
+              Run pipeline →
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="grid gap-4">
         {result.items.map((signal) => (
@@ -76,7 +131,7 @@ export default async function SignalsPage({
             <CardContent className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
               <div className="space-y-4">
                 <div>
-                  <p className="text-xs font-medium uppercase text-muted-foreground">AI summary</p>
+                  <p className="text-xs font-medium uppercase text-muted-foreground">Summary</p>
                   <p className="mt-1 text-sm leading-6">{signal.summary}</p>
                 </div>
                 <div>
@@ -108,7 +163,7 @@ export default async function SignalsPage({
         ))}
       </div>
 
-      {!q && (
+      {!q && !status && (
         <Pagination
           page={result.page}
           totalPages={result.totalPages}

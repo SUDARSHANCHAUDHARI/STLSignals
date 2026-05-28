@@ -202,6 +202,21 @@ export async function getSignalsPaginated(page = 1, pageSize = 20): Promise<Pagi
   return { items: signals.map(mapSignal), total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
+export async function getSignalsByStatus(status: string): Promise<Signal[]> {
+  if (useMockMode) {
+    return mockSignals.filter((s) => s.status === status);
+  }
+
+  const signals = await prisma.signal.findMany({
+    where: { status },
+    include: { posts: { include: { rawPost: true } } },
+    orderBy: [{ score: "desc" }, { createdAt: "desc" }],
+    take: 100
+  });
+
+  return signals.map(mapSignal);
+}
+
 export async function getDraftsPaginated(page = 1, pageSize = 20): Promise<PaginatedResult<Draft>> {
   if (useMockMode) {
     const start = (page - 1) * pageSize;
