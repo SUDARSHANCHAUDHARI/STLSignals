@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "AI-assisted trend discovery and content drafting platform for Sudarshan Tech Labs.",
+  "license": "MIT",
+  "author": "Sudarshan Chaudhari (SudarshanTechLabs)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,5 +1,10 @@
 # STL Signals
 
+[![Next.js](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-SQLite-2D3748.svg)](https://www.prisma.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 Laptop-only trend discovery and content drafting tool. Monitors public Reddit discussions, clusters topics into signals, and helps you write original blog posts using Claude Code — zero recurring cost.
 
 **Safety guarantees:** No auto-posting, no copying full Reddit posts, no publishing without manual approval.
@@ -120,3 +125,11 @@ Export → posts/[slug].md  or  Ghost CMS API
 - Human approval required before any content is published
 - Generate original analysis from metadata patterns — never copy post content verbatim
 - Attribute published posts: _"Signals observed from public Reddit discussions"_
+
+## Author
+
+Built by **Sudarshan Chaudhari** — SudarshanTechLabs.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
