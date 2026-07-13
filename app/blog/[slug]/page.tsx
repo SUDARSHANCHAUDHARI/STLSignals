@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 export const revalidate = 3600;
 import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
@@ -78,6 +79,7 @@ async function renderMarkdown(markdown: string): Promise<string> {
     .use(remarkParse)
     .use(remarkGfm)
     .use(remarkRehype)
+    .use(rehypeSanitize)
     .use(rehypeHighlight)
     .use(rehypeStringify)
     .process(markdown);

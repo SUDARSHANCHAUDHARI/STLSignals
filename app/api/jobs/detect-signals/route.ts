@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { detectSignalsJob } from "@/lib/jobs/detect-signals";
+import { requireCronSecret } from "@/lib/utils/cron-auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const denied = requireCronSecret(req);
+  if (denied) return denied;
   try {
     return NextResponse.json(await detectSignalsJob());
   } catch (error) {
