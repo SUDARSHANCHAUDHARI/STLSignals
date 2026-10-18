@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toSnippet, sourceAttribution } from "../lib/utils/safety";
+import { toSnippet, sourceAttribution, isSafeSlug } from "../lib/utils/safety";
 
 describe("toSnippet", () => {
   it("returns short text unchanged", () => {
@@ -30,5 +30,23 @@ describe("toSnippet", () => {
 describe("sourceAttribution", () => {
   it("returns the canonical attribution string", () => {
     expect(sourceAttribution()).toBe("Signals observed from public Reddit discussions");
+  });
+});
+
+describe("isSafeSlug", () => {
+  it("accepts lowercase letters, numbers and hyphens", () => {
+    expect(isSafeSlug("my-post-2")).toBe(true);
+  });
+
+  it("rejects path traversal and separators", () => {
+    expect(isSafeSlug("../../etc/passwd")).toBe(false);
+    expect(isSafeSlug("a/b")).toBe(false);
+    expect(isSafeSlug("a\\b")).toBe(false);
+  });
+
+  it("rejects empty, uppercase and dots", () => {
+    expect(isSafeSlug("")).toBe(false);
+    expect(isSafeSlug("Post")).toBe(false);
+    expect(isSafeSlug("post.md")).toBe(false);
   });
 });

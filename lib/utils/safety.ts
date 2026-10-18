@@ -10,3 +10,8 @@ export function toSnippet(text: string) {
 export function sourceAttribution() {
   return "Signals observed from public Reddit discussions";
 }
+
+// Slugs become file names (posts/<slug>.md), so only allow a safe character set.
+export function isSafeSlug(slug: string) {
+  return /^[a-z0-9-]+$/.test(slug);
+}
