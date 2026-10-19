@@ -5,6 +5,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/data/prisma";
+import { isSafeSlug } from "@/lib/utils/safety";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
 
@@ -60,6 +61,10 @@ export async function createDraft(formData: FormData) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+
+  if (!isSafeSlug(slug)) {
+    return { ok: false, error: "Slug may only contain lowercase letters, numbers and hyphens" };
+  }
 
   const tags = tagsRaw
     ? tagsRaw
@@ -160,8 +165,11 @@ export async function saveDraftToFile(draftId: string) {
   ].join("\n");
 
   const content = `${frontmatter}\n${draft.contentMarkdown}`;
-  const dir = path.join(process.cwd(), "posts");
-  const filePath = path.join(dir, `${draft.slug}.md`);
+  const dir = path.resolve(process.cwd(), "posts");
+  const filePath = path.resolve(dir, `${draft.slug}.md`);
+  if (!isSafeSlug(draft.slug) || path.dirname(filePath) !== dir) {
+    return { ok: false, error: "Draft slug is not a safe file name" };
+  }
 
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(filePath, content, "utf-8");
