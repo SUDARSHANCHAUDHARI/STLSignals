@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/data/prisma";
 import { getRecentPosts } from "@/lib/data/repository";
-import { inferTopic, scorePosts } from "@/lib/services/signal-scorer";
+import { clusterPostsByTopic, scorePosts } from "@/lib/services/signal-scorer";
 import { createJobLogger } from "@/lib/utils/logger";
 
 const useMockMode = process.env.MOCK_MODE !== "false";
@@ -15,13 +15,14 @@ export async function detectSignalsJob() {
     return { ok: true, signals: [] };
   }
 
-  const clusters = keywordCluster(posts);
+  const clusters = clusterPostsByTopic(posts);
 
   const scored = clusters.map((cluster) => {
     const clusterPosts = posts.filter((p) => cluster.postIds.includes(p.id));
+    const signal = scorePosts(cluster.topic, clusterPosts);
     return {
-      ...scorePosts(cluster.topic, clusterPosts),
-      keywords: cluster.keywords.length > 0 ? cluster.keywords : scorePosts(cluster.topic, clusterPosts).keywords,
+      ...signal,
+      keywords: cluster.keywords.length > 0 ? cluster.keywords : signal.keywords,
       confidence: cluster.confidence
     };
   });
@@ -39,7 +40,14 @@ export async function detectSignalsJob() {
       if (existing) {
         await prisma.signal.update({
           where: { id: existing.id },
-          data: { score: signal.score, confidence: signal.confidence, sourceCount: signal.sourceCount }
+          data: {
+            title: signal.title,
+            summary: signal.summary,
+            keywords: JSON.stringify(signal.keywords),
+            score: signal.score,
+            confidence: signal.confidence,
+            sourceCount: signal.sourceCount
+          }
         });
         signalId = existing.id;
       } else {
@@ -75,19 +83,4 @@ export async function detectSignalsJob() {
   };
   logger.done("complete", { clustersDetected: output.signals.length });
   return output;
-}
-
-function keywordCluster(posts: ReturnType<typeof Array.prototype.filter>) {
-  const grouped = new Map<string, string[]>();
-  for (const post of posts as Array<{ id: string; title: string }>) {
-    const topic = inferTopic(post.title);
-    grouped.set(topic, [...(grouped.get(topic) ?? []), post.id]);
-  }
-  return [...grouped.entries()].map(([topic, postIds]) => ({
-    topic,
-    label: topic.replace(/-/g, " "),
-    keywords: [] as string[],
-    postIds,
-    confidence: 0.7
-  }));
 }
