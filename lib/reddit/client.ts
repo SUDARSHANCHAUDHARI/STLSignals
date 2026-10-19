@@ -111,8 +111,14 @@ function mockRedditPosts(subreddit: string, keywords: string[]): RedditPostInput
   ];
 }
 
-function hashAuthor(author: string) {
-  return `sha256:${crypto.createHash("sha256").update(author).digest("hex")}`;
+// Keyed so a stored hash cannot be reversed by hashing guessed usernames.
+// Without AUTHOR_HASH_SECRET no author-derived value is stored at all.
+export function hashAuthor(author: string) {
+  const secret = process.env.AUTHOR_HASH_SECRET;
+  if (!secret) {
+    return "";
+  }
+  return `sha256:${crypto.createHmac("sha256", secret).update(author).digest("hex")}`;
 }
 
 function matchesKeywords(title: string, keywords: string[]) {

@@ -86,6 +86,7 @@ Copy `.env.example` to `.env` and fill in values. Never commit `.env`.
 | `REDDIT_CLIENT_ID` | Reddit OAuth app client ID |
 | `REDDIT_CLIENT_SECRET` | Reddit OAuth app client secret |
 | `REDDIT_USER_AGENT` | User-agent string (e.g. `STLSignals/0.1 by YourUsername`) |
+| `AUTHOR_HASH_SECRET` | Key for HMAC-SHA256 author hashes. Unset = no author hash stored |
 
 Get credentials at [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps) — create a "script" type app.
 
@@ -133,7 +134,7 @@ Export → posts/[slug].md  or  Ghost CMS API
 ## Safety Rules
 
 - Store only Reddit post metadata and short snippets (≤ 280 chars)
-- SHA-256 author hashing — no Reddit usernames stored
+- Keyed (HMAC-SHA256) author hashing — no Reddit usernames stored
 - No auto-posting or auto-commenting to Reddit
 - Human approval required before any content is published
 - Generate original analysis from metadata patterns — never copy post content verbatim
