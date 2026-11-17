@@ -1,10 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { inferTopic, scorePosts } from "../lib/services/signal-scorer";
+import { describe, it, expect } from "vitest";
+import { clusterPostsByTopic, inferTopic, scorePosts } from "../lib/services/signal-scorer";
 import type { RawPost } from "../lib/data/types";
 
 // Tests for the ingestion pipeline's mock-mode path.
-// We test keywordCluster logic indirectly via inferTopic + scorePosts
-// since keywordCluster is not exported.
 
 function makePost(overrides: Partial<RawPost> = {}): RawPost {
   return {
@@ -26,6 +24,31 @@ function makePost(overrides: Partial<RawPost> = {}): RawPost {
 }
 
 describe("ingestion — mock-mode clustering via inferTopic", () => {
+  it("clusters posts by inferred topic with stable post ids", () => {
+    const clusters = clusterPostsByTopic([
+      makePost({ id: "p1", title: "Fixing flaky tests in CI" }),
+      makePost({ id: "p2", title: "Repository secret scanning" }),
+      makePost({ id: "p3", title: "QA ownership models" })
+    ]);
+
+    expect(clusters).toEqual([
+      {
+        topic: "quality-engineering",
+        label: "quality engineering",
+        keywords: [],
+        postIds: ["p1", "p3"],
+        confidence: 0.7
+      },
+      {
+        topic: "cybersecurity",
+        label: "cybersecurity",
+        keywords: [],
+        postIds: ["p2"],
+        confidence: 0.7
+      }
+    ]);
+  });
+
   it("groups flaky test posts under quality-engineering", () => {
     const posts = [
       makePost({ id: "p1", title: "Fixing flaky tests in CI" }),

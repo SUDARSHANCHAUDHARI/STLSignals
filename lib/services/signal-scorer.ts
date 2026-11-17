@@ -1,4 +1,4 @@
-import type { RawPost } from "@/lib/data/types";
+import type { RawPost, TopicCluster } from "@/lib/data/types";
 
 export type ScoredSignal = {
   topic: string;
@@ -37,6 +37,21 @@ export function inferTopic(title: string): string {
     return "cybersecurity";
   }
   return "developer-tooling";
+}
+
+export function clusterPostsByTopic(posts: RawPost[]): TopicCluster[] {
+  const grouped = new Map<string, string[]>();
+  for (const post of posts) {
+    const topic = inferTopic(post.title);
+    grouped.set(topic, [...(grouped.get(topic) ?? []), post.id]);
+  }
+  return [...grouped.entries()].map(([topic, postIds]) => ({
+    topic,
+    label: topic.replace(/-/g, " "),
+    keywords: [],
+    postIds,
+    confidence: 0.7
+  }));
 }
 
 function topicToTitle(topic: string): string {
